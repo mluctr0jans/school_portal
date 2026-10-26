@@ -7,17 +7,28 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   </head>
   <body>
+    <!-- Student login: username=student, password=student123 -->
     <main class="card">
       <p class="eyebrow">STUDENT SERVICES</p>
       <h1>School Portal</h1>
-      <p>Sign in to view your school account.</p>
-      <form>
+      <p class="intro">Sign in to view your school account.</p>
+      <form id="login-form">
         <label for="username">Username</label>
-        <input id="username" name="username" autocomplete="username">
+        <input id="username" name="username" autocomplete="username" required>
         <label for="password">Password</label>
-        <input id="password" name="password" type="password" autocomplete="current-password">
-        <button type="button">Sign in</button>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+        <button type="submit">Sign in</button>
       </form>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+      <section id="account" class="account" hidden>
+        <p>Signed in as <strong id="account-name"></strong> (<span id="account-role"></span>).</p>
+        <details>
+          <summary>Current access token</summary>
+          <code id="token"></code>
+        </details>
+        <button id="logout" class="secondary" type="button">Sign out</button>
+      </section>
     </main>
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
   </body>
 </html>
