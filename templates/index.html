@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>School Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <main class="card">
+      <p class="eyebrow">STUDENT SERVICES</p>
+      <h1>School Portal</h1>
+      <p>Sign in to view your school account.</p>
+      <form>
+        <label for="username">Username</label>
+        <input id="username" name="username" autocomplete="username">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password">
+        <button type="button">Sign in</button>
+      </form>
+    </main>
+  </body>
+</html>
