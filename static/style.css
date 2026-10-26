@@ -61,9 +61,10 @@ button:hover { background: #2547a6; }
 button.secondary { background: #e9eef8; color: #263c70; }
 .status { min-height: 1.4em; color: #a13a35; font-size: 14px; }
 .account { padding-top: 4px; }
-.account details { margin: 18px 0 8px; }
-.account code { display: block; overflow-wrap: anywhere; margin-top: 9px; color: #52617a; font-size: 12px; }
-footer { margin-top: 26px; padding-top: 18px; border-top: 1px solid #e8edf4; font-size: 13px; }
+.site-footer { margin-top: 26px; padding-top: 18px; border-top: 1px solid #e8edf4; }
+.footer-label { margin: 0 0 10px; color: #68748a; font-size: 12px; font-weight: 650; }
+.social-links { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.social-links a { font-size: 12px; }
 a { color: #3156bd; }
 .dashboard { width: min(100%, 560px); }
 .flag-box { margin: 28px 0; padding: 18px; border-radius: 12px; background: #f0f5ff; }
