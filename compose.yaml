@@ -1,0 +1,15 @@
+services:
+  portal:
+    build: .
+    env_file:
+      - .env
+    environment:
+      DATABASE_PATH: /data/portal.sqlite3
+    ports:
+      - "${PORT:-8080}:5000"
+    volumes:
+      - portal_data:/data
+    restart: unless-stopped
+
+volumes:
+  portal_data:
