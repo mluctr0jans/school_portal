@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}School Portal{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body class="site-shell">
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="/" aria-label="School Portal home">
+          <span class="brand-mark" aria-hidden="true">SP</span>
+          <span>School Portal</span>
+        </a>
+        <span class="header-caption">Student Services</span>
+      </div>
+    </header>
+
+    <main class="page-main">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div class="footer-copy">
+          <p class="footer-title">School Portal</p>
+          <p class="footer-subtitle">Stay connected with Student Services</p>
+        </div>
+        <nav class="social-links" aria-label="Social media links">
+          <a href="https://www.instagram.com/schoolportal.demo/" target="_blank" rel="noopener noreferrer">Instagram</a>
+          <a href="https://www.facebook.com/schoolportal.demo/" target="_blank" rel="noopener noreferrer">Facebook</a>
+          <a href="https://x.com/schoolportal_demo" target="_blank" rel="noopener noreferrer">X</a>
+          <a href="https://www.tiktok.com/@schoolportal_demo" target="_blank" rel="noopener noreferrer">TikTok</a>
+          <a href="https://www.youtube.com/@schoolportal_demo" target="_blank" rel="noopener noreferrer">YouTube</a>
+          <a href="https://www.linkedin.com/company/schoolportal-demo/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+          <a href="https://discord.com/invite/schoolportal-demo" target="_blank" rel="noopener noreferrer">Discord</a>
+          <a href="https://www.reddit.com/user/schoolportal_demo/" target="_blank" rel="noopener noreferrer">Reddit</a>
+          <a href="https://t.me/schoolportal_demo" target="_blank" rel="noopener noreferrer">Telegram</a>
+          <a href="https://www.threads.net/@schoolportal_demo" target="_blank" rel="noopener noreferrer">Threads</a>
+          <a href="https://www.pinterest.com/schoolportal_demo/" target="_blank" rel="noopener noreferrer">Pinterest</a>
+          <a href="https://www.snapchat.com/add/schoolportal_demo" target="_blank" rel="noopener noreferrer">Snapchat</a>
+          <a href="https://www.twitch.tv/schoolportal_demo" target="_blank" rel="noopener noreferrer">Twitch</a>
+          <a href="https://github.com/mluctr0jans" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </nav>
+      </div>
+      <div class="footer-bottom">
+        <span>Student Services</span>
+        <span>School Portal</span>
+      </div>
+    </footer>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

@@ -1,21 +1,16 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Administrator Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  </head>
-  <body>
-    <main class="card dashboard">
-      <p class="eyebrow">SCHOOL PORTAL · ADMIN</p>
-      <h1>Administrator Dashboard</h1>
-      <p>Welcome, {{ username }}.</p>
-      <section class="flag-box">
-        <p>Portal notice</p>
-        <code id="flag">{{ flag }}</code>
-      </section>
-      <a href="/">Return to portal</a>
-    </main>
-  </body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Administrator Dashboard · School Portal{% endblock %}
+
+{% block content %}
+<section class="card dashboard" aria-labelledby="dashboard-title">
+  <p class="eyebrow">SCHOOL PORTAL · ADMIN</p>
+  <h1 id="dashboard-title">Administrator Dashboard</h1>
+  <p>Welcome, {{ username }}.</p>
+  <section class="flag-box">
+    <p>Portal notice</p>
+    <code id="flag">{{ flag }}</code>
+  </section>
+  <a href="/">Return to portal</a>
+</section>
+{% endblock %}
