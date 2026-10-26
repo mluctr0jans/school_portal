@@ -5,7 +5,7 @@ Flask application with JWT authentication and SQLite persistence.
 ## Run with Docker Compose
 
 1. Copy `.env.example` to `.env`.
-2. Set `FLAG` in `.env`.
+2. Set `JWT_SECRET` and `FLAG` in `.env`.
 3. Start the portal:
 
    ```sh

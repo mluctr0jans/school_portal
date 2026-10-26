@@ -14,8 +14,10 @@ from flask import Flask, jsonify, make_response, render_template, request
 from werkzeug.security import check_password_hash, generate_password_hash
 
 
-from config import JWT_SECRET
+JWT_SECRET = os.environ.get("JWT_SECRET", "")
 FLAG = os.environ.get("FLAG", "")
+if not JWT_SECRET or not FLAG:
+    raise RuntimeError("Set JWT_SECRET and FLAG in the environment before starting the portal.")
 
 DATABASE_PATH = os.environ.get("DATABASE_PATH", "/data/portal.sqlite3")
 STUDENT_USERNAME = os.environ.get("STUDENT_USERNAME", "student")
