@@ -2,16 +2,9 @@ const form = document.querySelector("#login-form");
 const statusMessage = document.querySelector("#status");
 const accountPanel = document.querySelector("#account");
 
-function readCookie(name) {
-  const prefix = `${encodeURIComponent(name)}=`;
-  const cookie = document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(prefix));
-  return cookie ? decodeURIComponent(cookie.slice(prefix.length)) : "";
-}
-
 function showAccount(user) {
   document.querySelector("#account-name").textContent = user.username;
   document.querySelector("#account-role").textContent = user.role;
-  document.querySelector("#token").textContent = readCookie("access_token");
   accountPanel.hidden = false;
   form.hidden = true;
   statusMessage.textContent = "";
