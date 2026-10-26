@@ -1,29 +1,83 @@
+"""School portal application."""
+
 import base64
+import binascii
 import hashlib
 import hmac
 import json
 import os
 import sqlite3
 import time
+from pathlib import Path
 
 from flask import Flask, jsonify, make_response, render_template, request
-from config import JWT_SECRET
 from werkzeug.security import check_password_hash, generate_password_hash
 
-DATABASE_PATH = os.environ.get("DATABASE_PATH", "portal.sqlite3")
+
+from config import JWT_SECRET
+FLAG = os.environ.get("FLAG", "")
+
+DATABASE_PATH = os.environ.get("DATABASE_PATH", "/data/portal.sqlite3")
 STUDENT_USERNAME = os.environ.get("STUDENT_USERNAME", "student")
 STUDENT_PASSWORD = os.environ.get("STUDENT_PASSWORD", "student123")
+TOKEN_TTL_SECONDS = 60 * 60
+
 app = Flask(__name__)
 
 
-def connect_db():
+def _b64url_encode(value: bytes) -> str:
+    return base64.urlsafe_b64encode(value).rstrip(b"=").decode("ascii")
+
+
+def _b64url_decode(value: str) -> bytes:
+    padded = value + "=" * (-len(value) % 4)
+    return base64.b64decode(padded, altchars=b"-_", validate=True)
+
+
+def _encode_jwt(claims: dict) -> str:
+    header = {"alg": "HS256", "typ": "JWT"}
+    header_part = _b64url_encode(json.dumps(header, separators=(",", ":")).encode())
+    claims_part = _b64url_encode(json.dumps(claims, separators=(",", ":")).encode())
+    signed_part = f"{header_part}.{claims_part}"
+    signature = hmac.new(JWT_SECRET.encode(), signed_part.encode(), hashlib.sha256).digest()
+    return f"{signed_part}.{_b64url_encode(signature)}"
+
+
+def _decode_jwt(token: str) -> dict:
+    parts = token.split(".")
+    if len(parts) != 3:
+        raise ValueError("Malformed token")
+
+    header = json.loads(_b64url_decode(parts[0]))
+    claims = json.loads(_b64url_decode(parts[1]))
+    if not isinstance(header, dict) or header.get("alg") != "HS256":
+        raise ValueError("Unsupported token algorithm")
+    if not isinstance(claims, dict):
+        raise ValueError("Malformed token claims")
+
+    signed_part = f"{parts[0]}.{parts[1]}"
+    expected = hmac.new(JWT_SECRET.encode(), signed_part.encode(), hashlib.sha256).digest()
+    supplied = _b64url_decode(parts[2])
+    if not hmac.compare_digest(expected, supplied):
+        raise ValueError("Invalid token signature")
+
+    expiry = claims.get("exp")
+    if not isinstance(expiry, (int, float)) or expiry <= time.time():
+        raise ValueError("Token has expired")
+    if not all(isinstance(claims.get(key), str) for key in ("sub", "username", "role")):
+        raise ValueError("Required token claims are missing")
+    return claims
+
+
+def _connect_db() -> sqlite3.Connection:
     connection = sqlite3.connect(DATABASE_PATH)
     connection.row_factory = sqlite3.Row
     return connection
 
 
-def initialize_database():
-    with connect_db() as connection:
+def _initialize_database() -> None:
+    Path(DATABASE_PATH).parent.mkdir(parents=True, exist_ok=True)
+    with _connect_db() as connection:
         connection.execute(
             """CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY,
@@ -38,52 +92,24 @@ def initialize_database():
         )
 
 
-def b64url_encode(value):
-    return base64.urlsafe_b64encode(value).rstrip(b"=").decode("ascii")
-
-
-def b64url_decode(value):
-    padded = value + "=" * (-len(value) % 4)
-    return base64.b64decode(padded, altchars=b"-_", validate=True)
-
-
-def encode_jwt(claims):
-    header = {"alg": "HS256", "typ": "JWT"}
-    header_part = b64url_encode(json.dumps(header, separators=(",", ":")).encode())
-    claims_part = b64url_encode(json.dumps(claims, separators=(",", ":")).encode())
-    signing_input = f"{header_part}.{claims_part}"
-    signature = hmac.new(JWT_SECRET.encode(), signing_input.encode(), hashlib.sha256).digest()
-    return f"{signing_input}.{b64url_encode(signature)}"
-
-
-def decode_jwt(token):
-    header_part, claims_part, signature_part = token.split(".")
-    header = json.loads(b64url_decode(header_part))
-    claims = json.loads(b64url_decode(claims_part))
-    if header.get("alg") != "HS256":
-        raise ValueError("Unsupported token algorithm")
-    signing_input = f"{header_part}.{claims_part}"
-    expected = hmac.new(JWT_SECRET.encode(), signing_input.encode(), hashlib.sha256).digest()
-    if not hmac.compare_digest(expected, b64url_decode(signature_part)):
-        raise ValueError("Invalid token signature")
-    if claims.get("exp", 0) <= time.time():
-        raise ValueError("Token has expired")
-    return claims
-
-
-def request_identity():
+def _request_identity():
     token = request.cookies.get("access_token")
     if not token:
-        return None
+        return None, "Sign in with the student account first."
     try:
-        return decode_jwt(token)
-    except (ValueError, TypeError, json.JSONDecodeError):
-        return None
+        return _decode_jwt(token), None
+    except (ValueError, TypeError, binascii.Error, json.JSONDecodeError, UnicodeError):
+        return None, "The access token is invalid or expired."
 
 
 @app.get("/")
 def index():
     return render_template("index.html")
+
+
+@app.get("/healthz")
+def healthz():
+    return jsonify(status="ok")
 
 
 @app.post("/api/login")
@@ -93,36 +119,48 @@ def login():
     password = body.get("password", "")
     if not isinstance(username, str) or not isinstance(password, str):
         return jsonify(error="Invalid username or password."), 401
-    with connect_db() as connection:
+    with _connect_db() as connection:
         user = connection.execute(
             "SELECT id, username, password_hash, role FROM users WHERE username = ?",
             (username,),
         ).fetchone()
+
     if user is None or not check_password_hash(user["password_hash"], password):
         return jsonify(error="Invalid username or password."), 401
 
     now = int(time.time())
-    token = encode_jwt({
-        "sub": str(user["id"]),
-        "username": user["username"],
-        "role": user["role"],
-        "iat": now,
-        "exp": now + 3600,
-    })
-    response = make_response(jsonify(
-        access_token=token,
-        user={"username": user["username"], "role": user["role"]},
-    ))
-    response.set_cookie("access_token", token, max_age=3600, httponly=False, secure=False, samesite="Lax")
+    token = _encode_jwt(
+        {
+            "sub": str(user["id"]),
+            "username": user["username"],
+            "role": user["role"],
+            "iat": now,
+            "exp": now + TOKEN_TTL_SECONDS,
+        }
+    )
+    response = make_response(
+        jsonify(
+            access_token=token,
+            user={"username": user["username"], "role": user["role"]},
+        )
+    )
+    response.set_cookie(
+        "access_token",
+        token,
+        max_age=TOKEN_TTL_SECONDS,
+        httponly=False,
+        secure=False,
+        samesite="Lax",
+    )
     return response
 
 
 @app.get("/api/me")
 def me():
-    identity = request_identity()
+    identity, error = _request_identity()
     if identity is None:
-        return jsonify(error="Sign in first."), 401
-    return jsonify(user={"username": identity["username"], "role": identity["role"]})
+        return jsonify(error=error), 401
+    return jsonify(user={key: identity[key] for key in ("username", "role")})
 
 
 @app.post("/api/logout")
@@ -132,7 +170,30 @@ def logout():
     return response
 
 
-initialize_database()
+@app.get("/admin/dashboard")
+def admin_dashboard():
+    identity, error = _request_identity()
+    if identity is None:
+        response = make_response(render_template("access_denied.html", message=error), 401)
+        return response
+    if identity["role"] != "admin":
+        response = make_response(
+            render_template(
+                "access_denied.html",
+                message="Your account does not have administrator privileges.",
+            ),
+            403,
+        )
+        return response
+    return render_template("dashboard.html", username=identity["username"], flag=FLAG)
+
+
+def initialize() -> None:
+    _initialize_database()
+
+
+initialize()
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
